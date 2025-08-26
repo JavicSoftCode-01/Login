@@ -29,7 +29,7 @@ class CustomLoginView(View):
             return render(request, self.template_name, {'error': error_message})
 
         hashed_password = make_password(self.hardcoded_pass)
-        
+
         if email == self.hardcoded_email and check_password(password, hashed_password):
             request.session['is_logged_in'] = True
             request.session['email'] = email
