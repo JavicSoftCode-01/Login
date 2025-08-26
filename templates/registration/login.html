@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acceso Mejorado - JSC Dashboard</title>
+  <style>
+      * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+      }
+
+      :root {
+          --primary-color: #2979FF;
+          --primary-color-dark: #1C56B8;
+          --accent-color: #FF4081;
+          --error-color: #F44336;
+          --success-color: #4CAF50;
+          --primary-color-hover: #1a68e8;
+          --primary-bg: #eef1f6;
+          --card-bg: #eef1f6;
+          --text-primary: #1e293b;
+          --text-secondary: #475569;
+          --text-muted: #94a3b8;
+          --shadow-light: #ffffff;
+          --shadow-dark: #d3d9e4;
+          --gradient-primary: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+          --border-radius: 20px;
+          --border-radius-sm: 12px;
+          --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      body {
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          background: var(--primary-bg);
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          line-height: 1.6;
+      }
+
+      .login-container {
+          width: 100%;
+          max-width: 440px;
+      }
+
+      .login-card {
+          background: var(--card-bg);
+          border-radius: var(--border-radius);
+          padding: 48px 40px;
+          box-shadow: 20px 20px 40px var(--shadow-dark), -20px -20px 40px var(--shadow-light);
+          position: relative;
+      }
+
+      .login-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: var(--gradient-primary);
+          border-radius: var(--border-radius) var(--border-radius) 0 0;
+      }
+
+      .login-header {
+          text-align: center;
+          margin-bottom: 40px;
+      }
+
+      .brand-logo {
+          width: 72px;
+          height: 72px;
+          margin: 0 auto 20px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
+      }
+
+      .brand-logo svg {
+          width: 32px;
+          height: 32px;
+          color: var(--primary-color);
+      }
+
+      h1 {
+          color: var(--text-primary);
+          font-size: 2rem;
+          font-weight: 700;
+      }
+
+      .form-group {
+          margin-bottom: 24px;
+      }
+
+      .input-wrapper {
+          position: relative;
+          background: var(--card-bg);
+          border-radius: var(--border-radius-sm);
+          box-shadow: inset 6px 6px 12px var(--shadow-dark), inset -6px -6px 12px var(--shadow-light);
+      }
+
+      .form-input {
+          width: 100%;
+          background: transparent;
+          border: none;
+          padding: 18px 24px;
+          color: var(--text-primary);
+          font-size: 16px;
+          outline: none;
+      }
+
+      .submit-btn {
+          width: 100%;
+          background: var(--primary-color);
+          border: none;
+          border-radius: var(--border-radius-sm);
+          padding: 16px 32px;
+          color: white;
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
+          transition: var(--transition);
+      }
+
+      .submit-btn:hover {
+          transform: translateY(-2px);
+          background: var(--primary-color-hover);
+      }
+
+      .logout-btn {
+          background-color: var(--error-color);
+      }
+
+      .error-message {
+          color: var(--error-color);
+          font-size: 14px;
+          margin-top: 16px;
+          text-align: center;
+          font-weight: 500;
+      }
+
+      .welcome-container p {
+          color: var(--text-secondary);
+          font-size: 1.1rem;
+          margin-bottom: 2rem;
+      }
+
+  </style>
+</head>
+<body>
+
+<div class="login-container">
+  <div class="login-card">
+
+    {% if request.session.is_logged_in %}
+
+      <!-- ESTADO: SESIÓN INICIADA -->
+      <div class="welcome-container">
+        <header class="login-header">
+          <h1>¡Bienvenido!</h1>
+        </header>
+        <p>Has iniciado sesión como: <strong>{{ request.session.email }}</strong></p>
+        <form action="{% url 'logout' %}" method="get">
+          <button type="submit" class="submit-btn logout-btn">Cerrar Sesión</button>
+        </form>
+      </div>
+
+    {% else %}
+
+      <!-- ESTADO: SIN SESIÓN (FORMULARIO DE LOGIN) -->
+      <header class="login-header">
+        <div class="brand-logo">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+          </svg>
+        </div>
+        <h1>Acceso</h1>
+      </header>
+
+      <form method="post" action="{% url 'login' %}" novalidate>
+        {% csrf_token %}
+
+        <div class="form-group">
+          <div class="input-wrapper">
+            <input type="email" name="email" class="form-input" placeholder="tu@ejemplo.com" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="input-wrapper">
+            <input type="password" name="password" class="form-input" placeholder="Tu contraseña" required>
+          </div>
+        </div>
+
+        {% if error %}
+          <div class="error-message">{{ error }}</div>
+        {% endif %}
+
+        <button type="submit" class="submit-btn" style="margin-top: 32px;">Iniciar Sesión</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+</body>
+</html>
