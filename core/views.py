@@ -2,34 +2,41 @@ from django.shortcuts import render, redirect
 from django.views import View
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth import logout
+from .utils import InputValidator
 
 
 class CustomLoginView(View):
-  template_name = 'registration/login.html'
-  hardcoded_email = 'javicsoftcode@gmail.com'
-  hardcoded_pass = 'EJQP_0940126212_sga'
+    template_name = 'registration/login.html'
+    hardcoded_email = 'javicsoftcode@gmail.com'
+    hardcoded_pass = 'EJQP_0940126212_sga'
 
-  def get(self, request):
-    if request.session.get('is_logged_in'):
-      return render(request, self.template_name)
-    return render(request, self.template_name)
+    def __init__(self):
+        super().__init__()
+        self.validator = InputValidator()
 
-  def post(self, request):
-    email = request.POST.get('email')
-    password = request.POST.get('password')
+    def get(self, request):
+        if request.session.get('is_logged_in'):
+            return render(request, self.template_name)
+        return render(request, self.template_name)
 
-    hashed_password = make_password(self.hardcoded_pass)
-    print("----------------------------------------------------")
-    print(f"DEMO: Password quemada '{self.hardcoded_pass}' se hashea a: {hashed_password}")
-    print("----------------------------------------------------")
+    def post(self, request):
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
 
-    if email == self.hardcoded_email and check_password(password, hashed_password):
-      request.session['is_logged_in'] = True
-      request.session['email'] = email
-      return redirect('login')
+        # Validate inputs
+        is_valid, error_message = self.validator.validate_login_input(email, password)
+        if not is_valid:
+            return render(request, self.template_name, {'error': error_message})
 
-    error_message = 'Credenciales inválidas. Intenta de nuevo.'
-    return render(request, self.template_name, {'error': error_message})
+        hashed_password = make_password(self.hardcoded_pass)
+        
+        if email == self.hardcoded_email and check_password(password, hashed_password):
+            request.session['is_logged_in'] = True
+            request.session['email'] = email
+            return redirect('login')
+
+        error_message = 'Credenciales inválidas. Intenta de nuevo.'
+        return render(request, self.template_name, {'error': error_message})
 
 
 class CustomLogoutView(View):

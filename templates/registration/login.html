@@ -152,6 +152,72 @@
           margin-bottom: 2rem;
       }
 
+      /* Estilos para los iconos en los inputs */
+      .input-icon {
+          position: absolute;
+          left: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: var(--text-muted);
+          width: 20px;
+          height: 20px;
+      }
+
+      .input-with-icon {
+          padding-left: 44px !important;
+      }
+
+      /* Estilos para el botón de mostrar/ocultar contraseña */
+      .toggle-password {
+          position: absolute;
+          right: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          background: none;
+          border: none;
+          cursor: pointer;
+          color: var(--text-muted);
+          padding: 4px;
+      }
+
+      .toggle-password:hover {
+          color: var(--primary-color);
+      }
+
+      /* Estilos para el loader */
+      .loader {
+          display: none;
+          width: 24px;
+          height: 24px;
+          border: 3px solid #fff;
+          border-radius: 50%;
+          border-top-color: transparent;
+          animation: spin 1s linear infinite;
+          margin: 0 auto;
+      }
+
+      @keyframes spin {
+          from {
+              transform: translate(-50%, -50%) rotate(0deg);
+          }
+          to {
+              transform: translate(-50%, -50%) rotate(360deg);
+          }
+      }
+
+      .submit-btn.loading {
+          color: transparent;
+          position: relative;
+      }
+
+      .submit-btn.loading .loader {
+          display: block;
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+      }
+
   </style>
 </head>
 <body>
@@ -182,30 +248,161 @@
                   d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
           </svg>
         </div>
-        <h1>Acceso</h1>
+        <h1>Iniciar Sesión</h1>
       </header>
 
-      <form method="post" action="{% url 'login' %}" novalidate>
+      <form method="post" action="{% url 'login' %}" novalidate id="loginForm" onsubmit="return validateForm(event)">
         {% csrf_token %}
 
         <div class="form-group">
           <div class="input-wrapper">
-            <input type="email" name="email" class="form-input" placeholder="tu@ejemplo.com" required>
+            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
+            </svg>
+            <input type="email"
+                   name="email"
+                   class="form-input input-with-icon"
+                   placeholder="tu@ejemplo.com"
+                   required
+                   maxlength="50"
+                   pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                   id="emailInput"
+                   value="{{ request.POST.email }}">
           </div>
+          <div class="error-message" id="emailError" style="display: none;"></div>
         </div>
-
+<br>
         <div class="form-group">
           <div class="input-wrapper">
-            <input type="password" name="password" class="form-input" placeholder="Tu contraseña" required>
+            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+            <input type="password"
+                   name="password"
+                   class="form-input input-with-icon"
+                   placeholder="Tu contraseña"
+                   required
+                   minlength="8"
+                   maxlength="20"
+                   id="passwordInput">
+            <button type="button" class="toggle-password" id="togglePassword">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+              </svg>
+            </button>
           </div>
+          <div class="error-message" id="passwordError" style="display: none;"></div>
         </div>
 
         {% if error %}
           <div class="error-message">{{ error }}</div>
         {% endif %}
 
-        <button type="submit" class="submit-btn" style="margin-top: 32px;">Iniciar Sesión</button>
+        <button type="submit" class="submit-btn" style="margin-top: 32px;" id="submitBtn">
+          Iniciar Sesión
+          <div class="loader"></div>
+        </button>
       </form>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Prevent paste on password field
+            document.getElementById('passwordInput').addEventListener('paste', function(e) {
+                e.preventDefault();
+                // Show asterisks animation
+                const input = e.target;
+                const asterisks = '*'.repeat(256);
+                const originalValue = input.value;
+                input.value = asterisks;
+                setTimeout(() => {
+                    input.value = originalValue;
+                }, 100);
+            });
+
+            // Email validation
+            const emailInput = document.getElementById('emailInput');
+            emailInput.addEventListener('input', function(e) {
+                // Remove spaces
+                this.value = this.value.replace(/\s/g, '');
+                // Remove emojis and special characters
+                this.value = this.value.replace(/[^\x00-\x7F]/g, '');
+            });
+
+            // Toggle password visibility
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('passwordInput');
+
+            togglePassword.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+
+                // Change eye icon
+                const eyePath = type === 'password'
+                    ? 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'
+                    : 'M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21';
+
+                togglePassword.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${eyePath}" />
+                </svg>`;
+            });
+        });
+
+        function validateForm(event) {
+            event.preventDefault();
+            let isValid = true;
+
+            // Email validation
+            const email = document.getElementById('emailInput');
+            const emailError = document.getElementById('emailError');
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+            if (!email.value) {
+                showError(emailError, 'El correo electrónico es requerido.');
+                isValid = false;
+            } else if (email.value.length > 50) {
+                showError(emailError, 'El correo electrónico no puede exceder 50 caracteres.');
+                isValid = false;
+            } else if (!emailRegex.test(email.value)) {
+                showError(emailError, 'Formato de correo electrónico inválido.');
+                isValid = false;
+            } else {
+                emailError.style.display = 'none';
+            }
+
+            // Password validation
+            const password = document.getElementById('passwordInput');
+            const passwordError = document.getElementById('passwordError');
+
+            if (!password.value) {
+                showError(passwordError, 'La contraseña es requerida.');
+                isValid = false;
+            } else if (password.value.length < 8) {
+                showError(passwordError, 'La contraseña debe tener al menos 8 caracteres.');
+                isValid = false;
+            } else if (password.value.length > 20) {
+                showError(passwordError, 'La contraseña no puede exceder 20 caracteres.');
+                isValid = false;
+            } else {
+                passwordError.style.display = 'none';
+            }
+
+            if (isValid) {
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.classList.add('loading');
+                setTimeout(() => {
+                    event.target.submit();
+                }, 100);
+            }
+
+            return false;
+        }
+
+        function showError(element, message) {
+            element.textContent = message;
+            element.style.display = 'block';
+        }
+      </script>
     {% endif %}
   </div>
 </div>
