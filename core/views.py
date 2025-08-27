@@ -7,8 +7,8 @@ from .utils import InputValidator
 
 class CustomLoginView(View):
     template_name = 'registration/login.html'
-    hardcoded_email = 'javicsoftcode@gmail.com'
-    hardcoded_pass = 'EJQP_0940126212_sga'
+    hardcoded_email = 'email'
+    hardcoded_pass = 'password123'
 
     def __init__(self):
         super().__init__()
